@@ -1,0 +1,30 @@
+.main{
+    min-height: 90vh;
+    border: 1px solid black;
+    /* margin: 10px; */
+}
+.staff{
+    width:200px;
+    border: 1px solid black;
+    padding: 10px 10px;
+}
+.table{
+    width: (100%-200px);
+    
+}
+.table-box{
+    min-height: 70vh;
+}
+.table-data{
+    min-height: 200px;
+}
+.roster{
+    width: 95%;
+    margin: auto;
+    border: 1px solid green;
+    background-color: rgb(84, 223, 84);
+    border-radius: 10px;
+    color: darkgreen;
+    font-size: 14px;
+    padding: 5px;
+}
