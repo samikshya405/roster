@@ -1,3 +1,8 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
 .main{
     min-height: 90vh;
     border: 1px solid black;
@@ -27,4 +32,8 @@
     color: darkgreen;
     font-size: 14px;
     padding: 5px;
+}
+.timeSelect{
+    max-height: 200px;
+    overflow-y: auto;
 }
