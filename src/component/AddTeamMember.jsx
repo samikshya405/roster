@@ -4,11 +4,17 @@ import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import { IoMdAddCircle } from "react-icons/io";
 
-function AddTeamMember() {
+function AddTeamMember({department}) {
   const [show, setShow] = useState(false);
+  const [formData, setformData] = useState({})
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+
+  const handleSubmit=(e)=>{
+    e.preventDefault()
+
+  }
 
   return (
     <>
@@ -27,10 +33,14 @@ function AddTeamMember() {
           <Modal.Title>Add team Member</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-         <Form>
+         <Form onSubmit={handleSubmit}>
          <Form.Label>Select Department</Form.Label>
          <Form.Select aria-label="Default select example">
-            <option>Receptionist</option>
+            {
+              department.map((dept,i)=>(
+                <option key={i} value={dept.name}>{dept.name}</option>
+              ))
+            }
          </Form.Select>
 
          <Form.Label>First Name</Form.Label>
@@ -61,12 +71,13 @@ function AddTeamMember() {
             placeholder="abc@gmail.com"
             // defaultValue="Mark"
           />
+          <div className='text-center m-3'>
+          <Button  variant="primary" type='submit'>Add Team Member</Button>
+          </div>
+           
          </Form>
         </Modal.Body>
-        <Modal.Footer>
-          
-          <Button variant="primary">Add Team Member</Button>
-        </Modal.Footer>
+        
       </Modal>
     </>
   );

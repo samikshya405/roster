@@ -2,12 +2,29 @@ import { useState } from "react";
 import { Form } from "react-bootstrap";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
+import { postDepartment } from "../utilis/axiosHelper";
 
 function AddNewArea() {
   const [show, setShow] = useState(false);
+  const [deptName, setdeptName] = useState('')
+
+  const handleChange=(e)=>{
+    setdeptName(e.target.value)
+  }
+
+  const handleAdd=async()=>{
+    if(deptName===""){
+      return 
+    }
+    const response = await postDepartment({name:deptName})
+    console.log(response.data.message);
+    setShow(false)
+
+  }
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+
 
   return (
     <>
@@ -33,12 +50,14 @@ function AddNewArea() {
             required
             type="text"
             placeholder="Receptionist"
+            value={deptName}
+            onChange={handleChange}
             // defaultValue="Mark"
           />
         </Modal.Body>
         <Modal.Footer>
          
-          <Button variant="primary">Save</Button>
+          <Button variant="primary" onClick={handleAdd}>Save</Button>
         </Modal.Footer>
       </Modal>
     </>

@@ -4,39 +4,10 @@ import { FaPlus } from "react-icons/fa";
 import RosterForm from "./RosterForm";
 import AddNewArea from "./AddNewArea";
 
-import { getStaff } from "../utilis/axiosHelper";
+import { getStaff, getdepartment } from "../utilis/axiosHelper";
 import AddTeamMember from "./AddTeamMember";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const department = [
-  "Receptionist",
-  "Nurse",
-  "Doctor",
-  "Nursing Assistant",
-  "Medicator",
-  "Cleaner",
-];
-
-const staffs = [
-  {
-    firstName: "samikshya",
-  },
-  {
-    firstName: "sadikshya",
-  },
-  {
-    firstName: "sabin",
-  },
-  {
-    firstName: "john",
-  },
-  {
-    firstName: "haryy",
-  },
-  {
-    firstName: "margaret",
-  },
-];
 
 const shiftData = [
   {
@@ -97,20 +68,28 @@ const shiftData = [
 
 const MyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [staffList, setStaffList] = useState([])
+  const [staffList, setStaffList] = useState([]);
+  const [department, setdepartment] = useState([]);
 
-  const getStaffList=async()=>{
-    const response = await getStaff()
+  const getStaffList = async () => {
+    const response = await getStaff();
+    const { staffs } = response.data;
+    setStaffList(staffs);
+  };
+  
 
+  const getDepartmentList = async () => {
+    const response = await getdepartment();
+    const { departments } = response.data;
     
-    const {staffs} = response.data
-    setStaffList(staffs)
 
-  }
-  useEffect(()=>{
-    getStaffList()
+    setdepartment(departments);
+  };
 
-  },[])
+  useEffect(() => {
+    getStaffList();
+    getDepartmentList();
+  }, []);
 
   const handleChange = (e) => {
     const selectedDate = new Date(e.target.value);
@@ -152,18 +131,16 @@ const MyCalendar = () => {
       <div className="main d-flex">
         <div className="staff p-0 m-0 ">
           <Form.Control type="text" placeholder="Search" className=" mr-sm-2" />
-         {
-          staffList.map((staff,i)=>(
+          {staffList.map((staff, i) => (
             <div key={i}>
-             <div className="p-2 ps-3 ">
-            <p className="p-0 m-0  text-capitalize">{staff.firstName}</p>
-            <p className="p-0 m-0 text-muted">0.0hr</p>
-          </div>
-          <hr className="p-0 m-0" /></div>
-          ))
-         }
-         <AddTeamMember/>
-         
+              <div className="p-2 ps-3 ">
+                <p className="p-0 m-0  text-capitalize">{staff.firstName}</p>
+                <p className="p-0 m-0 text-muted">0.0hr</p>
+              </div>
+              <hr className="p-0 m-0" />
+            </div>
+          ))}
+          <AddTeamMember department={department} />
         </div>
         <div className="table">
           <Table bordered className="table-box">
@@ -191,9 +168,13 @@ const MyCalendar = () => {
                   {week.map((day, dayIndex) => (
                     <td key={dayIndex} style={{ width: "calc(100% / 7" }}>
                       <div className="table-data">
-                        <p className="fw-bold">{dayIndex === 0 && dept}</p>
+                        <p className="fw-bold">{dayIndex === 0 && dept.name}</p>
                         <div className="text-center mb-1">
-                          <RosterForm day={day} department={dept} staffs={staffList} />
+                          <RosterForm
+                            day={day}
+                            department={dept.name}
+                            staffs={staffList}
+                          />
                         </div>
 
                         {shiftData.map((item, itemIndex) => {
