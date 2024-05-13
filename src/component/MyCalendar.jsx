@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Form, Table } from "react-bootstrap";
 import { FaPlus } from "react-icons/fa";
 import RosterForm from "./RosterForm";
 import AddNewArea from "./AddNewArea";
-import { IoMdAddCircle } from "react-icons/io";
+
+import { getStaff } from "../utilis/axiosHelper";
+import AddTeamMember from "./AddTeamMember";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const department = [
@@ -95,6 +97,20 @@ const shiftData = [
 
 const MyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [staffList, setStaffList] = useState([])
+
+  const getStaffList=async()=>{
+    const response = await getStaff()
+
+    
+    const {staffs} = response.data
+    setStaffList(staffs)
+
+  }
+  useEffect(()=>{
+    getStaffList()
+
+  },[])
 
   const handleChange = (e) => {
     const selectedDate = new Date(e.target.value);
@@ -119,7 +135,6 @@ const MyCalendar = () => {
   };
 
   const week = generateWeek(selectedDate);
-  console.log(week[0]);
 
   const currentDay = dayNames[new Date().getDay()];
 
@@ -138,19 +153,16 @@ const MyCalendar = () => {
         <div className="staff p-0 m-0 ">
           <Form.Control type="text" placeholder="Search" className=" mr-sm-2" />
          {
-          staffs.map((staff,i)=>(
-            <>
+          staffList.map((staff,i)=>(
+            <div key={i}>
              <div className="p-2 ps-3 ">
             <p className="p-0 m-0  text-capitalize">{staff.firstName}</p>
             <p className="p-0 m-0 text-muted">0.0hr</p>
           </div>
-          <hr className="p-0 m-0" /></>
+          <hr className="p-0 m-0" /></div>
           ))
          }
-         <div className="py-4 ps-3" role="button" style={{fontSize:"14px"}}>
-        <IoMdAddCircle/> Add Team Member
-         </div>
-         <hr className="p-0 m-0" />
+         <AddTeamMember/>
          
         </div>
         <div className="table">
@@ -181,7 +193,7 @@ const MyCalendar = () => {
                       <div className="table-data">
                         <p className="fw-bold">{dayIndex === 0 && dept}</p>
                         <div className="text-center mb-1">
-                          <RosterForm day={day} department={dept} staffs={staffs} />
+                          <RosterForm day={day} department={dept} staffs={staffList} />
                         </div>
 
                         {shiftData.map((item, itemIndex) => {
