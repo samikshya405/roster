@@ -4,7 +4,7 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import { postDepartment } from "../utilis/axiosHelper";
 
-function AddNewArea() {
+function AddNewArea({getDepartmentList}) {
   const [show, setShow] = useState(false);
   const [deptName, setdeptName] = useState('')
 
@@ -17,7 +17,7 @@ function AddNewArea() {
       return 
     }
     const response = await postDepartment({name:deptName})
-    console.log(response.data.message);
+    getDepartmentList()
     setShow(false)
 
   }

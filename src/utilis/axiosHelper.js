@@ -3,7 +3,7 @@ import axios from "axios"
 const rootAPI = import.meta.env.VITE_ROOT_API;
 const staffEP = "http://localhost:8000/api/v1/staffs"
 const departmentEP = "http://localhost:8000/api/v1/departments"
-const rosterEP = rootAPI + '/roster'
+const rosterEP = "http://localhost:8000/api/v1/rosters"
 
 
 //get user
@@ -14,18 +14,26 @@ export const getStaff =()=>{
 }
 
 //post user
-export const postNewStaff=(staffDetails)=>{
+export const postNewStaff=async(staffDetails)=>{
+    const data = await axios.post(staffEP,staffDetails)
+    return data
 
 }
 
 //post department
-export const postDepartment=(department)=>{
-    const data = axios.post(departmentEP,department)
+export const postDepartment=async(department)=>{
+    const data = await axios.post(departmentEP,department)
     return data
 }
 
 //get department
 export const getdepartment=()=>{
     const data = axios.get(departmentEP)
+    return data
+}
+
+//post roster
+export const postRoster = async(rosterDetails)=>{
+    const data = await axios.post(rosterEP,rosterDetails)
     return data
 }

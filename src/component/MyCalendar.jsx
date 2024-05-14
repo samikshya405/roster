@@ -74,6 +74,7 @@ const MyCalendar = () => {
   const getStaffList = async () => {
     const response = await getStaff();
     const { staffs } = response.data;
+    console.log(staffs);
     setStaffList(staffs);
   };
   
@@ -131,16 +132,16 @@ const MyCalendar = () => {
       <div className="main d-flex">
         <div className="staff p-0 m-0 ">
           <Form.Control type="text" placeholder="Search" className=" mr-sm-2" />
-          {staffList.map((staff, i) => (
+          {staffList?.map((staff, i) => (
             <div key={i}>
               <div className="p-2 ps-3 ">
-                <p className="p-0 m-0  text-capitalize">{staff.firstName}</p>
+                <p className="p-0 m-0  text-capitalize">{staff.fName}</p>
                 <p className="p-0 m-0 text-muted">0.0hr</p>
               </div>
               <hr className="p-0 m-0" />
             </div>
           ))}
-          <AddTeamMember department={department} />
+          <AddTeamMember department={department} getStaffList={getStaffList} />
         </div>
         <div className="table">
           <Table bordered className="table-box">
@@ -172,8 +173,9 @@ const MyCalendar = () => {
                         <div className="text-center mb-1">
                           <RosterForm
                             day={day}
-                            department={dept.name}
+                            deptName={dept.name}
                             staffs={staffList}
+                            
                           />
                         </div>
 
@@ -204,7 +206,7 @@ const MyCalendar = () => {
               ))}
             </tbody>
           </Table>
-          <AddNewArea />
+          <AddNewArea getDepartmentList={getDepartmentList}  />
         </div>
       </div>
     </div>
