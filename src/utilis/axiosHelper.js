@@ -37,3 +37,9 @@ export const postRoster = async(rosterDetails)=>{
     const data = await axios.post(rosterEP,rosterDetails)
     return data
 }
+
+//get roster
+export const getRoster = async()=>{
+    const data = await axios.get(rosterEP)
+    return data
+}

@@ -5,6 +5,7 @@ import Modal from "react-bootstrap/Modal";
 import { IoMdAddCircle } from "react-icons/io";
 import { CustomInput } from "./CustomInput";
 import { postNewStaff } from "../utilis/axiosHelper";
+import { toast } from 'react-toastify';
 
 const inputs = [
   {
@@ -68,6 +69,7 @@ function AddTeamMember({ department,getStaffList }) {
     getStaffList()
     console.log(response.data.message);
     setShow(false);
+    toast.success("New team member added")
   };
 
   return (

@@ -4,72 +4,17 @@ import { FaPlus } from "react-icons/fa";
 import RosterForm from "./RosterForm";
 import AddNewArea from "./AddNewArea";
 
-import { getStaff, getdepartment } from "../utilis/axiosHelper";
+import { getRoster, getStaff, getdepartment } from "../utilis/axiosHelper";
 import AddTeamMember from "./AddTeamMember";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const shiftData = [
-  {
-    date: "2024-05-05",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Receptionist",
-  },
-  {
-    date: "2024-05-05",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Receptionist",
-  },
-  {
-    date: "2024-05-05",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Receptionist",
-  },
-  {
-    date: "2024-05-06",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Receptionist",
-  },
-  {
-    date: "2024-05-06",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Receptionist",
-  },
-  {
-    date: "2024-05-06",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Receptionist",
-  },
-  {
-    date: "2024-05-06",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Receptionist",
-  },
-  {
-    date: "2024-05-10",
-    shiftTime: "09-04",
-    staffName: "S kharel",
-    department: "Doctor",
-  },
-  {
-    date: "2024-05-15",
-    shiftTime: "09-04",
-    staffName: "S Sapkota",
-    department: "Nursing Assistant",
-  },
-];
 
 const MyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [staffList, setStaffList] = useState([]);
   const [department, setdepartment] = useState([]);
+  const [shiftData, setshiftData] = useState([]);
 
   const getStaffList = async () => {
     const response = await getStaff();
@@ -77,19 +22,23 @@ const MyCalendar = () => {
     console.log(staffs);
     setStaffList(staffs);
   };
-  
 
   const getDepartmentList = async () => {
     const response = await getdepartment();
     const { departments } = response.data;
-    
 
     setdepartment(departments);
   };
 
+  const getRosterData = async () => {
+    const response = await getRoster();
+    const { result } = response.data;
+    setshiftData(result);
+  };
   useEffect(() => {
     getStaffList();
     getDepartmentList();
+    getRosterData();
   }, []);
 
   const handleChange = (e) => {
@@ -132,6 +81,7 @@ const MyCalendar = () => {
       <div className="main d-flex">
         <div className="staff p-0 m-0 ">
           <Form.Control type="text" placeholder="Search" className=" mr-sm-2" />
+          <AddTeamMember department={department} getStaffList={getStaffList} />
           {staffList?.map((staff, i) => (
             <div key={i}>
               <div className="p-2 ps-3 ">
@@ -141,7 +91,7 @@ const MyCalendar = () => {
               <hr className="p-0 m-0" />
             </div>
           ))}
-          <AddTeamMember department={department} getStaffList={getStaffList} />
+          
         </div>
         <div className="table">
           <Table bordered className="table-box">
@@ -175,22 +125,26 @@ const MyCalendar = () => {
                             day={day}
                             deptName={dept.name}
                             staffs={staffList}
-                            
+                            getRosterData={getRosterData}
                           />
                         </div>
 
-                        {shiftData.map((item, itemIndex) => {
-                          const itemDate = new Date(item.date);
+                        {shiftData?.map((item, itemIndex) => {
+                          const itemDate = item.startDate;
+
+                          // console.log(itemDate);
+                          const dayDate = day.date.toString().slice(0, 15);
+                         
+                         
                           if (
-                            itemDate.toISOString().split("T")[0] ===
-                              day.date.toISOString().split("T")[0] &&
-                            item.department === dept
+                            itemDate === dayDate &&
+                            item.department === dept.name
                           ) {
                             return (
-                              <div key={itemIndex} className="roster mb-1">
+                              <div key={itemIndex} className="roster mb-1" style={{background:item.staffName!=="empty" && "rgb(84, 223, 84)"}}>
                                 {" "}
                                 <p className="p-0 m-0 fw-bold">
-                                  {item.shiftTime}
+                                  {item.startTime} - {item.endTime}
                                 </p>
                                 <p className="p-0 m-0">{item.staffName}</p>
                               </div>
@@ -206,7 +160,7 @@ const MyCalendar = () => {
               ))}
             </tbody>
           </Table>
-          <AddNewArea getDepartmentList={getDepartmentList}  />
+          <AddNewArea getDepartmentList={getDepartmentList} />
         </div>
       </div>
     </div>

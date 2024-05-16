@@ -6,23 +6,24 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosTime } from "react-icons/io";
 import { GiHotMeal } from "react-icons/gi";
 import { FaCalendar } from "react-icons/fa";
-import { HiDotsHorizontal } from "react-icons/hi";
+
 import { RiDeleteBin6Fill } from "react-icons/ri";
 import { FaDotCircle } from "react-icons/fa";
 import { postRoster } from "../utilis/axiosHelper";
-
+import { toast } from "react-toastify";
 
 const initialState = {
   staffName: "empty",
   startDate: "",
   endDate: "",
-  startTime: "",
-  endTime: "",
+  startTime: "09:00",
+  endTime: "17:00",
   department: "",
 };
-function RosterForm({ day, deptName, staffs }) {
+function RosterForm({ day, deptName, staffs, getRosterData }) {
   const [show, setShow] = useState(false);
   const [timeEntered, settimeEntered] = useState(true);
+  const [showEndDate, setshowEnddate] = useState("");
   const [shiftData, setshiftData] = useState(initialState);
   const staffToSHow = staffs.filter((staff) => staff.department === deptName);
 
@@ -51,6 +52,18 @@ function RosterForm({ day, deptName, staffs }) {
       }
     }
   }
+  let timeDiff =0
+  const calculateTimeDiff =()=>{
+    
+    const {startTime, endTime} = shiftData
+    if(startTime > endTime){
+      timeDiff = (24-startTime) + endTime
+      
+    }else{
+      timeDiff=endTime-startTime
+    }
+
+  }
 
   const handleSelectChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +73,7 @@ function RosterForm({ day, deptName, staffs }) {
       // Split the times into hours and minutes
       const [hours1, minutes1] = startTime.split(":").map(Number);
       const [hours2, minutes2] = endTime.split(":").map(Number);
-      if (hours2 < hours1  || (hours1===hours2 && minutes2<minutes1)) {
+      if (hours2 < hours1 || (hours1 === hours2 && minutes2 < minutes1)) {
         const currentDate = new Date(day.date);
 
         // Add one day to the date
@@ -69,27 +82,35 @@ function RosterForm({ day, deptName, staffs }) {
         // Format the updated date as desired
         const tomorrowDateString = currentDate.toDateString();
         console.log(tomorrowDateString);
-        setshiftData({...shiftData,[name]:value,endDate:tomorrowDateString})
-      }else{
-        setshiftData({...shiftData,[name]:value})
+        setshiftData({
+          ...shiftData,
+          [name]: value,
+          endDate: tomorrowDateString,
+        });
+        setshowEnddate(tomorrowDateString);
+      } else {
+        setshiftData({ ...shiftData, [name]: value });
       }
-    }else{
+    } else {
       setshiftData({ ...shiftData, [name]: value });
-
     }
-   
+    calculateTimeDiff()
   };
-  const handleSubmit = async() => {
+  const handleSubmit = async () => {
     console.log(shiftData);
-    const response = await postRoster(shiftData)
+    const response = await postRoster(shiftData);
     console.log(response.data.message);
+
+    toast.success(`Shift added to ${shiftData.staffName}`);
+    getRosterData();
+    setShow(false);
   };
   useEffect(() => {
     setshiftData({
       ...shiftData,
       department: deptName,
       startDate: day.date.toString().slice(0, 15),
-      endDate:day.date.toString().slice(0, 15)
+      endDate: day.date.toString().slice(0, 15),
     });
   }, []);
   return (
@@ -106,7 +127,11 @@ function RosterForm({ day, deptName, staffs }) {
       >
         <Modal.Header closeButton>
           <Modal.Title>
-            <Form.Select name="staffName" onChange={handleSelectChange} required>
+            <Form.Select
+              name="staffName"
+              onChange={handleSelectChange}
+              required
+            >
               <option value="empty">Empty Shift</option>
               <option value="empty">
                 Empty Shift ( assigned it to somene later)
@@ -128,7 +153,8 @@ function RosterForm({ day, deptName, staffs }) {
           )}
 
           <p className="text-muted d-flex gap-3">
-            <FaCalendar /> {date}{" "}
+            <FaCalendar /> {date}
+            {showEndDate && <>-{showEndDate}</>}
           </p>
           <p className="d-flex gap-3 align-items-center">
             <IoIosTime />
@@ -136,6 +162,7 @@ function RosterForm({ day, deptName, staffs }) {
               aria-label="Default select example"
               style={{ width: "fit-content" }}
               name="startTime"
+              value={shiftData.startTime}
               onChange={handleSelectChange}
             >
               {timeOptions.map((time, i) => (
@@ -148,6 +175,7 @@ function RosterForm({ day, deptName, staffs }) {
             <Form.Select
               style={{ width: "fit-content" }}
               name="endTime"
+              value={shiftData.endTime}
               onChange={handleSelectChange}
             >
               {timeOptions.map((time, i) => (

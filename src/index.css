@@ -27,7 +27,7 @@
     width: 95%;
     margin: auto;
     border: 1px solid green;
-    background-color: rgb(84, 223, 84);
+    /* background-color: rgb(84, 223, 84); */
     border-radius: 10px;
     color: darkgreen;
     font-size: 14px;

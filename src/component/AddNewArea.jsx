@@ -3,6 +3,7 @@ import { Form } from "react-bootstrap";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import { postDepartment } from "../utilis/axiosHelper";
+import { toast } from "react-toastify";
 
 function AddNewArea({getDepartmentList}) {
   const [show, setShow] = useState(false);
@@ -19,6 +20,7 @@ function AddNewArea({getDepartmentList}) {
     const response = await postDepartment({name:deptName})
     getDepartmentList()
     setShow(false)
+    toast.success("New area has been added")
 
   }
 
