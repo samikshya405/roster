@@ -6,9 +6,9 @@ import AddNewArea from "./AddNewArea";
 
 import { getRoster, getStaff, getdepartment } from "../utilis/axiosHelper";
 import AddTeamMember from "./AddTeamMember";
+import { compareDate, generateWeek } from "./date";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 
 const MyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -19,7 +19,7 @@ const MyCalendar = () => {
   const getStaffList = async () => {
     const response = await getStaff();
     const { staffs } = response.data;
-    console.log(staffs);
+
     setStaffList(staffs);
   };
 
@@ -33,6 +33,7 @@ const MyCalendar = () => {
   const getRosterData = async () => {
     const response = await getRoster();
     const { result } = response.data;
+   
     setshiftData(result);
   };
   useEffect(() => {
@@ -46,26 +47,9 @@ const MyCalendar = () => {
     setSelectedDate(selectedDate);
   };
 
-  // Function to generate the entire week's dates and days
-  const generateWeek = (selectedDate) => {
-    const startDate = new Date(selectedDate);
-    const dayOfWeek = selectedDate.getDay();
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Offset to Monday
-    startDate.setDate(selectedDate.getDate() - mondayOffset); // Move to the start of the week
-
-    const week = [];
-    for (let i = 0; i < 7; i++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + i);
-      const day = dayNames[currentDate.getDay()];
-      week.push({ date: currentDate, day: day });
-    }
-    return week;
-  };
-
   const week = generateWeek(selectedDate);
 
-  const currentDay = dayNames[new Date().getDay()];
+  const currentDay = new Date();
 
   return (
     <div>
@@ -91,7 +75,6 @@ const MyCalendar = () => {
               <hr className="p-0 m-0" />
             </div>
           ))}
-          
         </div>
         <div className="table">
           <Table bordered className="table-box">
@@ -101,7 +84,9 @@ const MyCalendar = () => {
                   <th
                     key={index}
                     className={`text-center ${
-                      currentDay === day.day ? "text-primary" : "text-dark"
+                      compareDate(currentDay, day.date)
+                        ? "text-primary"
+                        : "text-dark"
                     }`}
                   >
                     {day.day}
@@ -126,22 +111,25 @@ const MyCalendar = () => {
                             deptName={dept.name}
                             staffs={staffList}
                             getRosterData={getRosterData}
+                            rosterData={shiftData}
                           />
                         </div>
 
                         {shiftData?.map((item, itemIndex) => {
-                          const itemDate = item.startDate;
-
-                          // console.log(itemDate);
-                          const dayDate = day.date.toString().slice(0, 15);
-                         
-                         
                           if (
-                            itemDate === dayDate &&
+                            compareDate(item.startDate, day.date) &&
                             item.department === dept.name
                           ) {
                             return (
-                              <div key={itemIndex} className="roster mb-1" style={{background:item.staffName!=="empty" && "rgb(84, 223, 84)"}}>
+                              <div
+                                key={itemIndex}
+                                className="roster mb-1"
+                                style={{
+                                  background:
+                                    item.staffName !== "empty" &&
+                                    "rgb(84, 223, 84)",
+                                }}
+                              >
                                 {" "}
                                 <p className="p-0 m-0 fw-bold">
                                   {item.startTime} - {item.endTime}

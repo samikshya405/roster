@@ -43,3 +43,13 @@ export const getRoster = async()=>{
     const data = await axios.get(rosterEP)
     return data
 }
+
+export const getRosterBydeptAndDate=async(department,date)=>{
+    const response = await axios.get(`${rosterEP}/rosterByDate`, {
+        params: {
+          department: department,
+          date: date
+        }
+      });
+      return response.data;
+}

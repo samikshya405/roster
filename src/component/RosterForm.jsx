@@ -6,11 +6,13 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosTime } from "react-icons/io";
 import { GiHotMeal } from "react-icons/gi";
 import { FaCalendar } from "react-icons/fa";
+import { CgDanger } from "react-icons/cg";
 
 import { RiDeleteBin6Fill } from "react-icons/ri";
 import { FaDotCircle } from "react-icons/fa";
 import { postRoster } from "../utilis/axiosHelper";
 import { toast } from "react-toastify";
+import { compareDate } from "./date";
 
 const initialState = {
   staffName: "empty",
@@ -20,21 +22,35 @@ const initialState = {
   endTime: "17:00",
   department: "",
 };
-function RosterForm({ day, deptName, staffs, getRosterData }) {
+function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
   const [show, setShow] = useState(false);
   const [timeEntered, settimeEntered] = useState(true);
   const [showEndDate, setshowEnddate] = useState("");
+  const [overLapped, setOverLapped] = useState(false);
   const [shiftData, setshiftData] = useState(initialState);
   const staffToSHow = staffs.filter((staff) => staff.department === deptName);
 
   const date = day.date.toString().slice(0, 10);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => {
-    setShow(true);
-    console.log(day.date);
-  };
+  const handleShow = () => setShow(true);
 
+  useEffect(() => {
+    const startDate = day.date;
+    startDate.setHours(9);
+    startDate.setMinutes(0);
+
+    const endDate = day.date;
+    endDate.setHours(17);
+    endDate.setMinutes(0);
+
+    setshiftData({
+      ...shiftData,
+      department: deptName,
+      startDate,
+      endDate,
+    });
+  }, []);
   // Function to pad single digit numbers with leading zeros
   const pad = (num) => {
     return (num < 10 ? "0" : "") + num;
@@ -52,67 +68,131 @@ function RosterForm({ day, deptName, staffs, getRosterData }) {
       }
     }
   }
-  let timeDiff =0
-  const calculateTimeDiff =()=>{
-    
-    const {startTime, endTime} = shiftData
-    if(startTime > endTime){
-      timeDiff = (24-startTime) + endTime
-      
-    }else{
-      timeDiff=endTime-startTime
+  let timeDiff = 0;
+  const calculateTimeDiff = () => {
+    const { startTime, endTime } = shiftData;
+    if (startTime > endTime) {
+      timeDiff = 24 - startTime + endTime;
+    } else {
+      timeDiff = endTime - startTime;
     }
-
-  }
+  };
 
   const handleSelectChange = (e) => {
     const { name, value } = e.target;
-    console.log(name, value);
-    if (name === "endTime") {
-      const { startTime, endTime } = shiftData;
-      // Split the times into hours and minutes
-      const [hours1, minutes1] = startTime.split(":").map(Number);
-      const [hours2, minutes2] = endTime.split(":").map(Number);
-      if (hours2 < hours1 || (hours1 === hours2 && minutes2 < minutes1)) {
-        const currentDate = new Date(day.date);
+    setOverLapped(false);
 
-        // Add one day to the date
-        currentDate.setDate(currentDate.getDate() + 1);
-
-        // Format the updated date as desired
-        const tomorrowDateString = currentDate.toDateString();
-        console.log(tomorrowDateString);
-        setshiftData({
-          ...shiftData,
-          [name]: value,
-          endDate: tomorrowDateString,
-        });
-        setshowEnddate(tomorrowDateString);
-      } else {
-        setshiftData({ ...shiftData, [name]: value });
-      }
+    if (name === "startTime" || name === "endTime") {
+      updateShiftTime(name, value);
     } else {
       setshiftData({ ...shiftData, [name]: value });
     }
-    calculateTimeDiff()
   };
+
+  const updateShiftTime = (name, value) => {
+    let { startTime, endTime } = shiftData;
+    const currentDate = new Date(day.date);
+    let startDate = new Date(day.date);
+    let endDate = new Date(day.date);
+
+    if (name === "startTime") {
+      startTime = value;
+    } else {
+      endTime = value;
+    }
+    const [hours1, minutes1] = startTime.split(":").map(Number);
+    const [hours2, minutes2] = endTime.split(":").map(Number);
+
+    if (name === "startTime") {
+      startDate.setHours(hours1);
+      startDate.setMinutes(minutes1);
+    } else {
+      endDate.setHours(hours2);
+      endDate.setMinutes(minutes2);
+    }
+
+    if (hours2 < hours1 || (hours1 === hours2 && minutes2 < minutes1)) {
+      endDate.setDate(currentDate.getDate() + 1);
+      const tommorrow = currentDate;
+      tommorrow.setDate(currentDate.getDate() + 1);
+      setshowEnddate(tommorrow.toString().slice(0, 10));
+    }
+
+    setshiftData({
+      ...shiftData,
+      [name]: value,
+      startDate,
+      endDate,
+    });
+  };
+
   const handleSubmit = async () => {
-    console.log(shiftData);
+    const shiftDate = new Date(shiftData.startDate).toISOString().split("T")[0];
+
+    const filteredRosterData = rosterData?.filter((item) => {
+      return (
+        (compareDate(item?.startDate, day.date) ||
+          compareDate(item?.endDate, day.date)) &&
+        item?.staffName !== "empty" &&
+        item?.staffName === shiftData.staffName
+      );
+    });
+    console.log(filteredRosterData);
+    let canAddShift = true;
+    const newShiftStart = new Date(`${shiftDate}T${shiftData.startTime}`);
+
+    const newShiftEnd = new Date(`${shiftDate}T${shiftData.endTime}`);
+
+    filteredRosterData?.forEach((item) => {
+      const existingShiftStart = new Date(
+        `${new Date(item.startDate).toISOString().split("T")[0]}T${
+          item.startTime
+        }`
+      );
+      const existingShiftEnd = new Date(
+        `${new Date(item.endDate).toISOString().split("T")[0]}T${item.endTime}`
+      );
+
+      // Check for overlapping shifts
+      if (compareDate(item.startDate, day.date)) {
+        if (
+          (newShiftStart < existingShiftStart &&
+            newShiftEnd < existingShiftStart) ||
+          newShiftStart > existingShiftEnd
+        ) {
+          canAddShift = true;
+        } else if (
+          (newShiftStart >= existingShiftStart &&
+            newShiftStart < existingShiftEnd) ||
+          (newShiftEnd > existingShiftStart &&
+            newShiftEnd <= existingShiftEnd) ||
+          (newShiftStart <= existingShiftStart &&
+            newShiftEnd >= existingShiftEnd)
+        ) {
+          canAddShift = false;
+        }
+      } else if (compareDate(item.endDate, day.date)) {
+        if(newShiftStart>existingShiftEnd){
+          canAddShift=true
+        }else{
+          canAddShift=false
+        }
+        
+      }
+    });
+
+    if (!canAddShift) {
+      setOverLapped(true);
+      return;
+    }
+
     const response = await postRoster(shiftData);
-    console.log(response.data.message);
 
     toast.success(`Shift added to ${shiftData.staffName}`);
     getRosterData();
     setShow(false);
   };
-  useEffect(() => {
-    setshiftData({
-      ...shiftData,
-      department: deptName,
-      startDate: day.date.toString().slice(0, 15),
-      endDate: day.date.toString().slice(0, 15),
-    });
-  }, []);
+
   return (
     <>
       <FaPlus role="button" onClick={handleShow} />
@@ -149,6 +229,11 @@ function RosterForm({ day, deptName, staffs, getRosterData }) {
           {staffToSHow.some((staff) => staff.department === deptName) ? null : (
             <p className="text-warning">
               No staff has been assigned to this department yet
+            </p>
+          )}
+          {overLapped && (
+            <p className="text-danger">
+              This team member has an overlapping shift <CgDanger />
             </p>
           )}
 
