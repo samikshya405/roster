@@ -176,7 +176,6 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
             <Form.Select
               name="staffName"
               onChange={handleSelectChange}
-              
               required
             >
               <option value="empty">Empty Shift</option>
@@ -255,14 +254,10 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
             <p className="p-0 m-0 text-muted">Total</p>
             <p className="fw-bold">7h 30min</p>
           </div>
-          <div className="d-flex gap-2">
-            <Button variant="danger">
-              <RiDeleteBin6Fill />
-            </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Save
-            </Button>
-          </div>
+
+          <Button variant="primary" onClick={handleSubmit}>
+            Save
+          </Button>
         </Modal.Footer>
       </Modal>
     </>

@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 import Button from "react-bootstrap/Button";
@@ -11,8 +9,10 @@ import { CgDanger } from "react-icons/cg";
 import { FaDotCircle } from "react-icons/fa";
 import { RiDeleteBin6Fill } from "react-icons/ri";
 import { compareDate, generateTimeOptions } from "./date";
+import { deleteRoster, updateRoster } from "../utilis/axiosHelper";
+import { toast } from "react-toastify";
 
-function EditRoster({ item, staffs }) {
+function EditRoster({ item, staffs, rosterData, getRosterData }) {
   const [show, setShow] = useState(false);
   const [showEndDate, setshowEndDate] = useState("");
   const staffToSHow = staffs.filter(
@@ -45,7 +45,7 @@ function EditRoster({ item, staffs }) {
 
   const updateShiftTime = (name, value) => {
     let { startTime, endTime } = shiftData;
-    setshowEndDate("")
+    setshowEndDate("");
     const currentDate = new Date(item.startDate);
     let startDate = new Date(item.startDate);
     let endDate = new Date(item.startDate);
@@ -81,16 +81,17 @@ function EditRoster({ item, staffs }) {
     });
   };
 
-
   const handleSubmit = async () => {
     const shiftDate = new Date(shiftData.startDate).toISOString().split("T")[0];
+    console.log(shiftDate);
 
-    const filteredRosterData = rosterData?.filter((item) => {
+    const filteredRosterData = rosterData?.filter((roster) => {
       return (
-        (compareDate(item?.startDate, day.date) ||
-          compareDate(item?.endDate, day.date)) &&
-        item?.staffName !== "empty" &&
-        item?.staffName === shiftData.staffName
+        (compareDate(roster?.startDate, item.startDate) ||
+          compareDate(roster?.endDate, item.startDate)) &&
+        roster?.staffName !== "empty" &&
+        roster?.staffName === shiftData.staffName &&
+        roster?._id !== item?._id
       );
     });
     // console.log(filteredRosterData);
@@ -99,17 +100,19 @@ function EditRoster({ item, staffs }) {
 
     const newShiftEnd = new Date(`${shiftDate}T${shiftData.endTime}`);
 
-    filteredRosterData?.forEach((item) => {
+    filteredRosterData?.forEach((roster) => {
       const existingShiftStart = new Date(
-        `${new Date(item.startDate).toISOString().split("T")[0]}T${
-          item.startTime
+        `${new Date(roster.startDate).toISOString().split("T")[0]}T${
+          roster.startTime
         }`
       );
       const existingShiftEnd = new Date(
-        `${new Date(item.endDate).toISOString().split("T")[0]}T${item.endTime}`
+        `${new Date(roster.endDate).toISOString().split("T")[0]}T${
+          roster.endTime
+        }`
       );
 
-      if (compareDate(item.startDate, day.date)) {
+      if (compareDate(roster.startDate, item.startDate)) {
         if (
           (newShiftStart >= existingShiftStart &&
             newShiftStart < existingShiftEnd) || // Case 1: New shift starts during existing shift
@@ -132,12 +135,22 @@ function EditRoster({ item, staffs }) {
       return;
     }
 
-    const response = await postRoster(shiftData);
-
-    toast.success(`Shift added to ${shiftData.staffName}`);
+    const response = await updateRoster({ id: item._id, ...shiftData });
+    console.log(response);
+    
+    toast.success(`Shift updated for ${shiftData.staffName}`);
     getRosterData();
     setShow(false);
   };
+
+  const handleDelete=async()=>{
+    const response = await deleteRoster(item._id)
+    
+    toast.success("shift is deleted")
+    getRosterData()
+    setShow(false)
+
+  }
   return (
     <>
       <div
@@ -182,7 +195,11 @@ function EditRoster({ item, staffs }) {
               No staff has been assigned to this department yet
             </p>
           )}
-
+          {overLapped && (
+            <p className="text-danger">
+              This team member has an overlapping shift <CgDanger />
+            </p>
+          )}
           <p className="text-muted d-flex gap-3">
             <FaCalendar /> {date}
             {showEndDate && <>-{showEndDate}</>}
@@ -215,29 +232,26 @@ function EditRoster({ item, staffs }) {
                   {time.displayText}
                 </option>
               ))}
-
-              
             </Form.Select>
-            
           </p>
           <p className="d-flex align-items-center gap-3">
             <FaDotCircle /> {item.department}
           </p>
           <p className="d-flex gap-3">
-                {" "}
-                <GiHotMeal /> Half hr meal break(unpaid)
-              </p>
+            {" "}
+            <GiHotMeal /> Half hr meal break(unpaid)
+          </p>
         </Modal.Body>
         <Modal.Footer className="d-flex justify-content-between">
-        <div>
+          <div>
             <p className="p-0 m-0 text-muted">Total</p>
             <p className="fw-bold">7h 30min</p>
           </div>
           <div className="d-flex gap-2">
-            <Button variant="danger">
+            <Button variant="danger" onClick={handleDelete}>
               <RiDeleteBin6Fill />
             </Button>
-            <Button variant="primary" >
+            <Button variant="primary" onClick={handleSubmit}>
               Save
             </Button>
           </div>

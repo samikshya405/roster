@@ -124,7 +124,7 @@ const MyCalendar = () => {
                             return (
                               <div key={itemIndex}>
                               
-                              <EditRoster item={item} staffs = {staffList} rosterData={shiftData}/>
+                              <EditRoster item={item} staffs = {staffList} rosterData={shiftData} getRosterData={getRosterData}/>
                               </div>
                             );
                           }
