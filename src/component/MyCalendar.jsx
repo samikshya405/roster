@@ -7,6 +7,7 @@ import AddNewArea from "./AddNewArea";
 import { getRoster, getStaff, getdepartment } from "../utilis/axiosHelper";
 import AddTeamMember from "./AddTeamMember";
 import { compareDate, generateWeek } from "./date";
+import EditRoster from "./EditRoster";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -33,7 +34,7 @@ const MyCalendar = () => {
   const getRosterData = async () => {
     const response = await getRoster();
     const { result } = response.data;
-   
+
     setshiftData(result);
   };
   useEffect(() => {
@@ -121,20 +122,9 @@ const MyCalendar = () => {
                             item.department === dept.name
                           ) {
                             return (
-                              <div
-                                key={itemIndex}
-                                className="roster mb-1"
-                                style={{
-                                  background:
-                                    item.staffName !== "empty" &&
-                                    "rgb(84, 223, 84)",
-                                }}
-                              >
-                                {" "}
-                                <p className="p-0 m-0 fw-bold">
-                                  {item.startTime} - {item.endTime}
-                                </p>
-                                <p className="p-0 m-0">{item.staffName}</p>
+                              <div key={itemIndex}>
+                              
+                              <EditRoster item={item} staffs = {staffList} rosterData={shiftData}/>
                               </div>
                             );
                           }
@@ -143,6 +133,7 @@ const MyCalendar = () => {
                         })}
                       </div>
                     </td>
+
                   ))}
                 </tr>
               ))}

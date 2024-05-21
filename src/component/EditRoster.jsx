@@ -1,58 +1,36 @@
+
+
 import { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
-import { FaPlus } from "react-icons/fa";
 import { IoIosTime } from "react-icons/io";
 import { GiHotMeal } from "react-icons/gi";
 import { FaCalendar } from "react-icons/fa";
 import { CgDanger } from "react-icons/cg";
-
-import { RiDeleteBin6Fill } from "react-icons/ri";
 import { FaDotCircle } from "react-icons/fa";
-import { postRoster } from "../utilis/axiosHelper";
-import { toast } from "react-toastify";
+import { RiDeleteBin6Fill } from "react-icons/ri";
 import { compareDate, generateTimeOptions } from "./date";
 
-const initialState = {
-  staffName: "empty",
-  startDate: "",
-  endDate: "",
-  startTime: "09:00",
-  endTime: "17:00",
-  department: "",
-};
-function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
+function EditRoster({ item, staffs }) {
   const [show, setShow] = useState(false);
+  const [showEndDate, setshowEndDate] = useState("");
+  const staffToSHow = staffs.filter(
+    (staff) => staff.department === item.department
+  );
+  const date = new Date(item.startDate).toDateString().slice(0, 10);
+  const [shiftData, setShiftData] = useState({ ...item });
+  const timeOptions = generateTimeOptions();
+
   const [timeEntered, settimeEntered] = useState(true);
-  const [showEndDate, setshowEnddate] = useState("");
   const [overLapped, setOverLapped] = useState(false);
-  const [shiftData, setshiftData] = useState(initialState);
-  const staffToSHow = staffs.filter((staff) => staff.department === deptName);
-
-  const date = day.date.toString().slice(0, 10);
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
 
   useEffect(() => {
-    const startDate = day.date;
-    startDate.setHours(9);
-    startDate.setMinutes(0);
-
-    const endDate = day.date;
-    endDate.setHours(17);
-    endDate.setMinutes(0);
-
-    setshiftData({
-      ...shiftData,
-      department: deptName,
-      startDate,
-      endDate,
-    });
+    if (!compareDate(item.startDate, item.endDate))
+      [setshowEndDate(new Date(item.endDate).toDateString().slice(0, 10))];
   }, []);
-
-  const timeOptions = generateTimeOptions();
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
   const handleSelectChange = (e) => {
     const { name, value } = e.target;
@@ -61,15 +39,16 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
     if (name === "startTime" || name === "endTime") {
       updateShiftTime(name, value);
     } else {
-      setshiftData({ ...shiftData, [name]: value });
+      setShiftData({ ...shiftData, [name]: value });
     }
   };
 
   const updateShiftTime = (name, value) => {
     let { startTime, endTime } = shiftData;
-    const currentDate = new Date(day.date);
-    let startDate = new Date(day.date);
-    let endDate = new Date(day.date);
+    setshowEndDate("")
+    const currentDate = new Date(item.startDate);
+    let startDate = new Date(item.startDate);
+    let endDate = new Date(item.startDate);
 
     if (name === "startTime") {
       startTime = value;
@@ -91,16 +70,17 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
       endDate.setDate(currentDate.getDate() + 1);
       const tommorrow = currentDate;
       tommorrow.setDate(currentDate.getDate() + 1);
-      setshowEnddate(tommorrow.toString().slice(0, 10));
+      setshowEndDate(tommorrow.toString().slice(0, 10));
     }
 
-    setshiftData({
+    setShiftData({
       ...shiftData,
       [name]: value,
       startDate,
       endDate,
     });
   };
+
 
   const handleSubmit = async () => {
     const shiftDate = new Date(shiftData.startDate).toISOString().split("T")[0];
@@ -158,28 +138,32 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
     getRosterData();
     setShow(false);
   };
-
   return (
     <>
-      <FaPlus role="button" onClick={handleShow} />
-
-      <Modal
-        show={show}
-        onHide={handleClose}
-        animation={false}
-        centered
-        backdrop="static"
-        keyboard={false}
+      <div
+        // key={itemIndex}
+        className="roster mb-1"
+        role="button"
+        onClick={handleShow}
+        style={{
+          background: item.staffName !== "empty" && "rgb(84, 223, 84)",
+        }}
       >
+        {" "}
+        <p className="p-0 m-0 fw-bold">
+          {item.startTime} - {item.endTime}
+        </p>
+        <p className="p-0 m-0">{item.staffName}</p>
+      </div>
+      <Modal show={show} onHide={handleClose} centered>
         <Modal.Header closeButton>
           <Modal.Title>
             <Form.Select
               name="staffName"
+              value={shiftData.staffName}
               onChange={handleSelectChange}
-              
               required
             >
-              <option value="empty">Empty Shift</option>
               <option value="empty">
                 Empty Shift ( assigned it to somene later)
               </option>
@@ -193,14 +177,9 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {staffToSHow.some((staff) => staff.department === deptName) ? null : (
+          {staffToSHow?.length > 0 ? null : (
             <p className="text-warning">
               No staff has been assigned to this department yet
-            </p>
-          )}
-          {overLapped && (
-            <p className="text-danger">
-              This team member has an overlapping shift <CgDanger />
             </p>
           )}
 
@@ -208,6 +187,7 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
             <FaCalendar /> {date}
             {showEndDate && <>-{showEndDate}</>}
           </p>
+
           <p className="d-flex gap-3 align-items-center">
             <IoIosTime />
             <Form.Select
@@ -235,23 +215,21 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
                   {time.displayText}
                 </option>
               ))}
+
+              
             </Form.Select>
+            
           </p>
-          {!timeEntered && (
-            <p className="text-danger">
-              Start time and end time cannot be same !
-            </p>
-          )}
           <p className="d-flex align-items-center gap-3">
-            <FaDotCircle /> {deptName}
+            <FaDotCircle /> {item.department}
           </p>
           <p className="d-flex gap-3">
-            {" "}
-            <GiHotMeal /> Half hr meal break(unpaid)
-          </p>
+                {" "}
+                <GiHotMeal /> Half hr meal break(unpaid)
+              </p>
         </Modal.Body>
         <Modal.Footer className="d-flex justify-content-between">
-          <div>
+        <div>
             <p className="p-0 m-0 text-muted">Total</p>
             <p className="fw-bold">7h 30min</p>
           </div>
@@ -259,7 +237,7 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
             <Button variant="danger">
               <RiDeleteBin6Fill />
             </Button>
-            <Button variant="primary" onClick={handleSubmit}>
+            <Button variant="primary" >
               Save
             </Button>
           </div>
@@ -269,4 +247,4 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
   );
 }
 
-export default RosterForm;
+export default EditRoster;

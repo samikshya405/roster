@@ -26,3 +26,26 @@ export const generateWeek = (selectedDate) => {
     }
     return week;
   };
+
+
+  export const generateTimeOptions = ()=>{
+
+    const pad = (num) => {
+      return (num < 10 ? "0" : "") + num;
+    };
+  
+    const timeOptions = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        if (minute % 15 === 0) {
+          const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+          const period = hour < 12 ? "AM" : "PM";
+          const timeValue = `${pad(hour)}:${pad(minute)}`;
+          const displayText = `${pad(displayHour)}:${pad(minute)} ${period}`;
+          timeOptions.push({ timeValue, displayText });
+        }
+      }
+    }
+    return timeOptions
+
+  }
