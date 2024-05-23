@@ -44,6 +44,8 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
     endDate.setHours(17);
     endDate.setMinutes(0);
 
+   
+
     setshiftData({
       ...shiftData,
       department: deptName,
@@ -103,21 +105,27 @@ function RosterForm({ day, deptName, staffs, getRosterData, rosterData }) {
   };
 
   const handleSubmit = async () => {
+    console.log(shiftData);
     const shiftDate = new Date(shiftData.startDate).toISOString().split("T")[0];
+    const shiftEndDate = new Date(shiftData.endDate)
+      .toISOString()
+      .split("T")[0];
 
     const filteredRosterData = rosterData?.filter((item) => {
       return (
-        (compareDate(item?.startDate, day.date) ||
-          compareDate(item?.endDate, day.date)) &&
+        (compareDate(item?.startDate, shiftData.startDate) ||
+          compareDate(item?.endDate, shiftData.startDate) ||
+          compareDate(item?.startDate, shiftData.endDate) ||
+          compareDate(item?.startDate, shiftData.endDate)) &&
         item?.staffName !== "empty" &&
         item?.staffName === shiftData.staffName
       );
     });
-    // console.log(filteredRosterData);
+    console.log(filteredRosterData);
     let canAddShift = true;
     const newShiftStart = new Date(`${shiftDate}T${shiftData.startTime}`);
 
-    const newShiftEnd = new Date(`${shiftDate}T${shiftData.endTime}`);
+    const newShiftEnd = new Date(`${shiftEndDate}T${shiftData.endTime}`);
 
     filteredRosterData?.forEach((item) => {
       const existingShiftStart = new Date(

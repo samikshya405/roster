@@ -4,10 +4,13 @@ import { FaPlus } from "react-icons/fa";
 import RosterForm from "./RosterForm";
 import AddNewArea from "./AddNewArea";
 
-import { getRoster, getStaff, getdepartment } from "../utilis/axiosHelper";
+import { getRoster, getStaff, getdepartment, updateRoster } from "../utilis/axiosHelper";
 import AddTeamMember from "./AddTeamMember";
 import { compareDate, generateWeek } from "./date";
 import EditRoster from "./EditRoster";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import EachRow from "./EachRow";
+import Overlapped from "./Overlapped";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -16,6 +19,7 @@ const MyCalendar = () => {
   const [staffList, setStaffList] = useState([]);
   const [department, setdepartment] = useState([]);
   const [shiftData, setshiftData] = useState([]);
+  const [isOverLapped, setIsOverLapped] = useState(false)
 
   const getStaffList = async () => {
     const response = await getStaff();
@@ -51,9 +55,99 @@ const MyCalendar = () => {
   const week = generateWeek(selectedDate);
 
   const currentDay = new Date();
+  const onDragEnd = async(result) => {
+    
+    const { source, destination } = result;
+    if (!destination) return;
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    )
+      return;
+
+    const droppableDate = destination.droppableId.slice(24);
+    const depId = destination.droppableId.slice(0, 24);
+    const dragId = result.draggableId;
+    const objtoUpdate = shiftData.find((item) => item._id === dragId);
+  
+
+    const depName = department.find((item) => item._id === depId).name;
+    if (depName === objtoUpdate.department) {
+      const currentDate = new Date(droppableDate);
+      let tomorrow = currentDate;
+      if (!compareDate(objtoUpdate.startDate, objtoUpdate.endDate)) {
+        tomorrow.setDate(currentDate.getDate() + 1);
+      }
+      const filteredRosterData = shiftData?.filter((roster) => {
+        return (
+          (compareDate(roster?.startDate, currentDate) ||
+            compareDate(roster?.endDate, currentDate) ||
+            compareDate(roster?.startDate, tomorrow) ||
+            compareDate(roster?.startDate, tomorrow)) &&
+          roster?.staffName !== "empty" &&
+          roster?.staffName === objtoUpdate.staffName 
+          &&
+          roster?._id !== objtoUpdate?._id
+        );
+      });
+
+      const shiftDate = new Date(currentDate).toISOString().split("T")[0];
+      const shiftEndDate = new Date(tomorrow).toISOString().split("T")[0]
+      let canAddShift = true;
+      const newShiftStart = new Date(`${shiftDate}T${objtoUpdate.startTime}`);
+
+      const newShiftEnd = new Date(`${shiftEndDate}T${objtoUpdate.endTime}`);
+
+      filteredRosterData?.forEach((roster) => {
+        const existingShiftStart = new Date(
+          `${new Date(roster.startDate).toISOString().split("T")[0]}T${
+            roster.startTime
+          }`
+        );
+        const existingShiftEnd = new Date(
+          `${new Date(roster.endDate).toISOString().split("T")[0]}T${
+            roster.endTime
+          }`
+        );
+  
+        if (compareDate(roster.startDate, currentDate)) {
+          if (
+            (newShiftStart >= existingShiftStart &&
+              newShiftStart < existingShiftEnd) || // Case 1: New shift starts during existing shift
+            (newShiftEnd > existingShiftStart &&
+              newShiftEnd <= existingShiftEnd) || // Case 2: New shift ends during existing shift
+            (newShiftStart <= existingShiftStart &&
+              newShiftEnd >= existingShiftEnd) // Case 3: New shift fully overlaps existing shift
+          ) {
+            canAddShift = false;
+          }
+        } else {
+          if (newShiftStart < existingShiftEnd) {
+            canAddShift = false;
+          }
+        }
+      });
+      if (!canAddShift) {
+        setIsOverLapped(true);
+        console.log("overlapped detected");
+        
+        
+        return;
+      }
+      objtoUpdate.startDate = currentDate
+      objtoUpdate.endDate = tomorrow
+      const response = await updateRoster({ id: objtoUpdate._id, ...objtoUpdate });
+    
+    getRosterData();
+    }
+  };
 
   return (
     <div>
+      {
+        isOverLapped && <Overlapped/>
+      }
+      
       <div className="d-flex justify-content-center p-2 m-3">
         <div>
           <input
@@ -99,45 +193,25 @@ const MyCalendar = () => {
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {department.map((dept, deptIndex) => (
-                <tr key={deptIndex} className="tableData">
-                  {week.map((day, dayIndex) => (
-                    <td key={dayIndex} style={{ width: "calc(100% / 7" }}>
-                      <div className="table-data">
-                        <p className="fw-bold">{dayIndex === 0 && dept.name}</p>
-                        <div className="text-center mb-1">
-                          <RosterForm
-                            day={day}
-                            deptName={dept.name}
-                            staffs={staffList}
-                            getRosterData={getRosterData}
-                            rosterData={shiftData}
-                          />
-                        </div>
-
-                        {shiftData?.map((item, itemIndex) => {
-                          if (
-                            compareDate(item.startDate, day.date) &&
-                            item.department === dept.name
-                          ) {
-                            return (
-                              <div key={itemIndex}>
-                              
-                              <EditRoster item={item} staffs = {staffList} rosterData={shiftData} getRosterData={getRosterData}/>
-                              </div>
-                            );
-                          }
-
-                          return null;
-                        })}
-                      </div>
-                    </td>
-
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            <DragDropContext onDragEnd={onDragEnd}>
+              <tbody>
+                {department.map((dept, deptIndex) => (
+                  <tr key={deptIndex} className="tableData">
+                    {week.map((day, dayIndex) => (
+                      <EachRow
+                        key={dayIndex}
+                        dept={dept}
+                        day={day}
+                        dayIndex={dayIndex}
+                        staffList={staffList}
+                        getRosterData={getRosterData}
+                        shiftData={shiftData}
+                      />
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </DragDropContext>
           </Table>
           <AddNewArea getDepartmentList={getDepartmentList} />
         </div>

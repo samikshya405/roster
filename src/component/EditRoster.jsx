@@ -11,8 +11,9 @@ import { RiDeleteBin6Fill } from "react-icons/ri";
 import { compareDate, generateTimeOptions } from "./date";
 import { deleteRoster, updateRoster } from "../utilis/axiosHelper";
 import { toast } from "react-toastify";
+import { Draggable } from "react-beautiful-dnd";
 
-function EditRoster({ item, staffs, rosterData, getRosterData }) {
+function EditRoster({ item, itemIndex, staffs, rosterData, getRosterData }) {
   const [show, setShow] = useState(false);
   const [showEndDate, setshowEndDate] = useState("");
   const staffToSHow = staffs.filter(
@@ -26,8 +27,10 @@ function EditRoster({ item, staffs, rosterData, getRosterData }) {
   const [overLapped, setOverLapped] = useState(false);
 
   useEffect(() => {
-    if (!compareDate(item.startDate, item.endDate))
-      [setshowEndDate(new Date(item.endDate).toDateString().slice(0, 10))];
+    if (!compareDate(item.startDate, item.endDate)){
+      setshowEndDate(new Date(item.endDate).toDateString().slice(0, 10))
+    }
+      
   }, []);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -84,11 +87,16 @@ function EditRoster({ item, staffs, rosterData, getRosterData }) {
   const handleSubmit = async () => {
     const shiftDate = new Date(shiftData.startDate).toISOString().split("T")[0];
     console.log(shiftDate);
+    const shiftEndDate = new Date(shiftData.endDate)
+      .toISOString()
+      .split("T")[0];
 
     const filteredRosterData = rosterData?.filter((roster) => {
       return (
-        (compareDate(roster?.startDate, item.startDate) ||
-          compareDate(roster?.endDate, item.startDate)) &&
+        (compareDate(roster?.startDate, shiftData.startDate) ||
+          compareDate(roster?.endDate, shiftData.startDate) ||
+          compareDate(roster?.startDate, shiftData.endDate) ||
+          compareDate(roster?.startDate, shiftData.endDate)) &&
         roster?.staffName !== "empty" &&
         roster?.staffName === shiftData.staffName &&
         roster?._id !== item?._id
@@ -98,7 +106,7 @@ function EditRoster({ item, staffs, rosterData, getRosterData }) {
     let canAddShift = true;
     const newShiftStart = new Date(`${shiftDate}T${shiftData.startTime}`);
 
-    const newShiftEnd = new Date(`${shiftDate}T${shiftData.endTime}`);
+    const newShiftEnd = new Date(`${shiftEndDate}T${shiftData.endTime}`);
 
     filteredRosterData?.forEach((roster) => {
       const existingShiftStart = new Date(
@@ -137,37 +145,45 @@ function EditRoster({ item, staffs, rosterData, getRosterData }) {
 
     const response = await updateRoster({ id: item._id, ...shiftData });
     console.log(response);
-    
+
     toast.success(`Shift updated for ${shiftData.staffName}`);
     getRosterData();
     setShow(false);
   };
 
-  const handleDelete=async()=>{
-    const response = await deleteRoster(item._id)
-    
-    toast.success("shift is deleted")
-    getRosterData()
-    setShow(false)
+  const handleDelete = async () => {
+    const response = await deleteRoster(item._id);
 
-  }
+    toast.success("shift is deleted");
+    getRosterData();
+    setShow(false);
+  };
   return (
     <>
-      <div
-        // key={itemIndex}
-        className="roster mb-1"
-        role="button"
-        onClick={handleShow}
-        style={{
-          background: item.staffName !== "empty" && "rgb(84, 223, 84)",
-        }}
-      >
-        {" "}
-        <p className="p-0 m-0 fw-bold">
-          {item.startTime} - {item.endTime}
-        </p>
-        <p className="p-0 m-0">{item.staffName}</p>
-      </div>
+      <Draggable draggableId={item._id} index={itemIndex}>
+        {(provided) => (
+          <div
+            className="roster mb-1"
+            role="button"
+            onClick={handleShow}
+            {...provided.dragHandleProps}
+            {...provided.draggableProps}
+            ref={provided.innerRef}
+            style={{
+              ...provided.draggableProps.style,
+              background:
+                item.staffName !== "empty" ? "rgb(84, 223, 84)" : "white",
+            }}
+          >
+            {" "}
+            <p className="p-0 m-0 fw-bold">
+              {item.startTime} - {item.endTime}
+            </p>
+            <p className="p-0 m-0">{item.staffName}</p>
+          </div>
+        )}
+      </Draggable>
+
       <Modal show={show} onHide={handleClose} centered>
         <Modal.Header closeButton>
           <Modal.Title>
